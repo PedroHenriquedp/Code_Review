@@ -2,9 +2,12 @@ package handler
 
 import (
 	"app/internal"
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/bootcamp-go/web/response"
+	"github.com/go-chi/chi/v5"
 )
 
 // VehicleJSON is a struct that represents a vehicle in JSON format
@@ -74,5 +77,48 @@ func (h *VehicleDefault) GetAll() http.HandlerFunc {
 			"message": "success",
 			"data":    data,
 		})
+	}
+}
+
+func (h *VehicleDefault) GetByBrandAndBetweenYears() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		yearStartParam := chi.URLParam(r, "start_year")
+		yearStart, err := strconv.Atoi(yearStartParam)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "400 Bad Request: É esperado um valor inteiro para o ano inicial", http.StatusBadRequest)
+			return
+		}
+
+		yearEndParam := chi.URLParam(r, "end_year")
+		yearEnd, err := strconv.Atoi(yearEndParam)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "400 Bad Request: É esperado um valor inteiro para o ano final", http.StatusBadRequest)
+			return
+		}
+		if yearStart <= 0 || yearEnd <= 0 {
+			http.Error(w, "400 Bad Request: Os dados dos anos foram mal formatados", http.StatusBadRequest)
+			return
+		}
+
+		brand := chi.URLParam(r, "brand")
+		if brand == "" {
+			http.Error(w, "400 Bad Request: Dados mal formatados ou incompletos.", http.StatusBadRequest)
+			return
+		}
+
+		results, err := h.sv.GetByBrandAndBetweenYears(yearStart, yearEnd, brand)
+		if err != nil {
+			http.Error(w, "500 - Erro interno", http.StatusBadRequest)
+			return
+		}
+
+		if results == nil {
+			http.Error(w, "404 Not Found: No se encontraron vehículos con esos criterios.", http.StatusNotFound)
+			return
+		}
+
+		response.JSON(w, http.StatusOK, results)
 	}
 }

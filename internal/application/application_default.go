@@ -35,7 +35,7 @@ func NewServerChi(cfg *ConfigServerChi) *ServerChi {
 	}
 
 	return &ServerChi{
-		serverAddress: defaultConfig.ServerAddress,
+		serverAddress:  defaultConfig.ServerAddress,
 		loaderFilePath: defaultConfig.LoaderFilePath,
 	}
 }
@@ -72,6 +72,7 @@ func (a *ServerChi) Run() (err error) {
 	rt.Route("/vehicles", func(rt chi.Router) {
 		// - GET /vehicles
 		rt.Get("/", hd.GetAll())
+		rt.Get("/brand/{brand}/between/{start_year}/{end_year}", hd.GetByBrandAndBetweenYears())
 	})
 
 	// run server
